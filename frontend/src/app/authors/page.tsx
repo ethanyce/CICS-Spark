@@ -48,8 +48,8 @@ export default function AuthorsPage() {
         <Sidebar />
 
         <main className="flex-1 min-w-0 pt-7 pb-8">
-          <p className="font-body text-[14px] leading-[28px] text-[#555] mb-4">
-            Browse contributors alphabetically. Click a name to view author materials.
+          <p className="font-body text-[14px] leading-[24px] text-[#555] mb-4">
+            Listing of authors who have works in the repository. Click the name of an author to see a listing of that person&apos;s work.
           </p>
 
           <div className="relative border-b border-[#d6d4d4] pb-[11px] mb-5">
@@ -57,9 +57,9 @@ export default function AuthorsPage() {
             <div className="absolute left-0 bottom-[-1px] h-[3px] w-[95px] bg-[#f3aa2c] rounded-tr-[5px] rounded-br-[5px]" />
           </div>
 
-          <div className="border border-[#d8d8d8] bg-[#f4f4f4] p-3 flex flex-wrap gap-x-3 gap-y-1 mb-6">
+          <div className="flex flex-wrap gap-x-2 gap-y-1 mb-6">
             {LETTERS.map((letter) => (
-              <a key={letter} href={`#author-${letter}`} className="font-body text-[30px] leading-none text-cics-maroon hover:underline no-underline">
+              <a key={letter} href={`#author-${letter}`} className="font-body text-[20px] leading-none text-cics-maroon hover:underline no-underline">
                 {letter}
               </a>
             ))}
@@ -68,25 +68,22 @@ export default function AuthorsPage() {
           <div className="space-y-6">
             {LETTERS.map((letter) => {
               const names = AUTHOR_GROUPS[letter]
+              if (names.length === 0) return null
 
               return (
                 <section key={letter} id={`author-${letter}`} className="scroll-mt-24">
                   <h2 className="font-heading text-[36px] text-cics-maroon leading-none mb-2">{letter}</h2>
-                  {names.length > 0 ? (
-                    <div className="flex flex-col gap-1">
-                      {names.map((name) => (
-                        <a
-                          key={name}
-                          href="/search"
-                          className="font-body text-[15px] text-cics-maroon hover:underline w-fit"
-                        >
-                          {name}
-                        </a>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="font-body text-[13px] text-[#888]">No authors indexed.</p>
-                  )}
+                  <div className="flex flex-col gap-1">
+                    {names.map((name) => (
+                      <a
+                        key={name}
+                        href="/search"
+                        className="font-body text-[15px] text-cics-maroon hover:underline w-fit"
+                      >
+                        {name}
+                      </a>
+                    ))}
+                  </div>
                 </section>
               )
             })}
