@@ -1,15 +1,14 @@
 "use client"
 
 import { useEffect, useMemo, useState } from 'react'
-import { Mail, Plus } from 'lucide-react'
-import { Button, Card, CardContent } from '@/components/ui'
+import { Mail } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui'
 import AdminBadge from '@/components/admin/AdminBadge'
 import AdminDataTable from '@/components/admin/AdminDataTable'
 import AdminFilterBar from '@/components/admin/AdminFilterBar'
 import AdminPagination from '@/components/admin/AdminPagination'
 import AdminPageHeader from '@/components/admin/AdminPageHeader'
-import AdminUserDialog from '@/components/admin/AdminUserDialog'
-import { getAdminUsers, createStudent, type ApiUser } from '@/lib/api/users'
+import { getAdminUsers, type ApiUser } from '@/lib/api/users'
 
 const PAGE_SIZE = 8
 
@@ -25,19 +24,15 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [page, setPage] = useState(1)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
 
-  function fetchUsers() {
+  useEffect(() => {
     setLoading(true)
     getAdminUsers()
       .then(setUsers)
       .catch((err) => setError(err.message ?? 'Failed to load users'))
       .finally(() => setLoading(false))
-  }
+  }, [])
 
-  useEffect(() => { fetchUsers() }, [])
   useEffect(() => { setPage(1) }, [searchQuery])
 
   const filtered = useMemo(() => {
@@ -117,45 +112,11 @@ export default function AdminUsersPage() {
     [],
   )
 
-  async function handleAddStudent(payload: {
-    name: string
-    email: string
-    role: string
-    department?: string
-  }) {
-    setSaving(true)
-    setSaveError(null)
-    const nameParts = payload.name.trim().split(' ')
-    const first_name = nameParts[0] ?? ''
-    const last_name = nameParts.slice(1).join(' ') || first_name
-
-    try {
-      await createStudent({
-        email: payload.email,
-        first_name,
-        last_name,
-        department: (payload.department ?? 'CS') as 'CS' | 'IT' | 'IS',
-      })
-      setDialogOpen(false)
-      fetchUsers()
-    } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to create student')
-    } finally {
-      setSaving(false)
-    }
-  }
-
   return (
     <div className="space-y-4">
       <AdminPageHeader
-        title="User Management"
-        subtitle="Manage student accounts in your department"
-        action={
-          <Button className="h-9 rounded-md px-4 text-xs" onClick={() => setDialogOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" />
-            Add Student
-          </Button>
-        }
+        title="Users"
+        subtitle="View student accounts in your department"
       />
 
       {error && (
@@ -177,7 +138,7 @@ export default function AdminUsersPage() {
               columns={columns}
               rows={paged}
               rowKey={(u) => u.id}
-              emptyMessage="No users match your search."
+              emptyMessage="No users found in your department."
               minWidthClassName="min-w-[980px]"
             />
           )}
@@ -195,22 +156,6 @@ export default function AdminUsersPage() {
           />
         </CardContent>
       </Card>
-
-      {dialogOpen ? (
-        <AdminUserDialog
-          mode="add"
-          onClose={() => { setDialogOpen(false); setSaveError(null) }}
-          onSubmit={(payload) => {
-            handleAddStudent(payload)
-          }}
-        />
-      ) : null}
-
-      {saveError && (
-        <p className="fixed bottom-4 right-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-md">
-          {saveError}
-        </p>
-      )}
     </div>
   )
 }

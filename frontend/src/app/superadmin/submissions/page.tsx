@@ -24,7 +24,7 @@ const STATUS_LABEL: Record<string, string> = {
   revision: 'Revision Requested',
 }
 
-export default function AdminSubmissionsPage() {
+export default function SuperAdminSubmissionsPage() {
   const [submissions, setSubmissions] = useState<ApiDocument[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -42,7 +42,6 @@ export default function AdminSubmissionsPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  // Read URL params on mount
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
@@ -131,7 +130,7 @@ export default function AdminSubmissionsPage() {
         header: 'Action',
         renderCell: (doc: ApiDocument) => (
           <Link
-            href={`/admin/submissions/review/${doc.id}`}
+            href={`/superadmin/submissions/review/${doc.id}`}
             className="inline-flex items-center gap-1 text-cics-maroon no-underline transition-colors hover:text-cics-maroon-600"
           >
             <Eye className="h-3.5 w-3.5" />
@@ -146,8 +145,8 @@ export default function AdminSubmissionsPage() {
   return (
     <div className="space-y-4">
       <AdminPageHeader
-        title="Submissions"
-        subtitle="Review and manage thesis and capstone submissions"
+        title="All Submissions"
+        subtitle="Review and manage submissions across all departments"
       />
 
       <AdminMetricCards cards={summaryCards} columnsClassName="sm:grid-cols-2 lg:grid-cols-5" compact />

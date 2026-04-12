@@ -34,6 +34,7 @@ export interface SubmissionDraft {
   publishedOn: string
   department: string
   documentType: string
+  trackSpecialization: string
   degree: string
   thesisAdvisor: string
   panelChair: string

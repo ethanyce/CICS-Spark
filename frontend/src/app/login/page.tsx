@@ -29,7 +29,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const data = await login(email.trim(), password)
+      const data = await login(email.trim(), password.trim())
 
       if (data.role === 'student') {
         setError('Use the Student Login for student accounts.')

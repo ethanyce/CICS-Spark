@@ -110,7 +110,7 @@ export default function SuperAdminUsersPage() {
     [],
   )
 
-  async function handleAdd(payload: { name: string; email: string; role: string; department?: string }) {
+  async function handleAdd(payload: { name: string; email: string; role: string; department?: string; status?: string; password?: string }) {
     setSaving(true)
     setSaveError(null)
     const nameParts = payload.name.trim().split(' ')
@@ -120,9 +120,9 @@ export default function SuperAdminUsersPage() {
 
     try {
       if (dialogMode === 'add-admin') {
-        await createAdmin({ email: payload.email, first_name, last_name, department })
+        await createAdmin({ email: payload.email, first_name, last_name, department, password: payload.password })
       } else {
-        await createStudent({ email: payload.email, first_name, last_name, department })
+        await createStudent({ email: payload.email, first_name, last_name, department, password: payload.password })
       }
       setDialogMode(null)
       fetchUsers()
@@ -198,6 +198,7 @@ export default function SuperAdminUsersPage() {
       {dialogMode ? (
         <AdminUserDialog
           mode="add"
+          lockedRole={dialogMode === 'add-admin' ? 'admin' : 'student'}
           onClose={() => { setDialogMode(null); setSaveError(null) }}
           onSubmit={handleAdd}
         />

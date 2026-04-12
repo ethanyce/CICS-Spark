@@ -1,56 +1,26 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { use, useEffect, useRef, useState } from 'react'
 import { CICSHeader, CICSFooter, SecondaryNav, Sidebar } from '@/components/layout'
 import { ThesisDetailView } from '@/components/thesis'
-import { thesisCollections, getThesisTracksByCollection, type ThesisEntry, type ThesisDetail } from '@/lib/utils/theses-data'
-import { getDocumentById, submitFulltextRequest, type ApiDocument } from '@/lib/api/documents'
+import { thesisCollections, getThesisTracksByCollection, type ThesisEntry } from '@/lib/utils/theses-data'
+import { getDocumentById, submitFulltextRequest } from '@/lib/api/documents'
 import { Button, Card, CardContent, Input, Label } from '@/components/ui'
-
-function apiDocToEntry(doc: ApiDocument): ThesisEntry {
-  const deptNames: Record<string, string> = { CS: 'Computer Science', IT: 'Information Technology', IS: 'Information Systems' }
-  const detail: ThesisDetail = {
-    publicationDate: doc.year ? String(doc.year) : new Date(doc.created_at).getFullYear().toString(),
-    documentType: doc.type === 'thesis' ? 'Thesis' : 'Capstone',
-    degreeName: '—',
-    subjectCategories: Array.isArray(doc.keywords) ? doc.keywords.join(', ') : '',
-    college: 'College of Information and Computing Sciences',
-    departmentUnit: deptNames[doc.department ?? ''] ?? doc.department ?? '—',
-    thesisAdvisor: doc.adviser ?? 'Not provided',
-    defensePanelChair: 'Not provided',
-    defensePanelMembers: ['Not provided'],
-    abstractSummary: doc.abstract ? [doc.abstract] : ['No abstract available.'],
-    language: 'English',
-    format: 'Electronic (PDF)',
-    keywords: Array.isArray(doc.keywords) ? doc.keywords.join(', ') : 'None',
-    recommendedCitation: `${Array.isArray(doc.authors) ? doc.authors.join(', ') : doc.authors}. (${doc.year ?? '—'}). ${doc.title}.`,
-    embargoPeriod: 'None',
-  }
-  return {
-    slug: doc.id,
-    title: doc.title,
-    authors: Array.isArray(doc.authors) ? doc.authors.join(', ') : String(doc.authors ?? ''),
-    date: doc.year ? String(doc.year) : new Date(doc.created_at).getFullYear().toString(),
-    type: doc.type === 'thesis' ? 'Thesis' : 'Capstone',
-    abstract: doc.abstract ?? '',
-    tags: Array.isArray(doc.keywords) ? doc.keywords.join(', ') : '',
-    departmentSlug: '',
-    trackSlug: doc.track_specialization ?? '',
-    detail,
-  }
-}
+import { apiDocToEntry } from '@/lib/utils/api-adapters'
 
 interface ThesisItemPageProps {
-  params: { collection: string; track: string; thesis: string }
+  params: Promise<{ collection: string; track: string; thesis: string }>
 }
 
-export default function ThesisItemPage({ params }: Readonly<ThesisItemPageProps>) {
+export default function ThesisItemPage({ params: paramsPromise }: Readonly<ThesisItemPageProps>) {
+  const params = use(paramsPromise)
   const collection = thesisCollections.find((c) => c.slug === params.collection)
   const track = collection ? getThesisTracksByCollection(collection.slug).find((t) => t.slug === params.track) : undefined
 
   const [entry, setEntry] = useState<ThesisEntry | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const fulltextFormRef = useRef<HTMLDivElement>(null)
 
   // Fulltext request form state
   const [showFulltextForm, setShowFulltextForm] = useState(false)
@@ -124,7 +94,11 @@ export default function ThesisItemPage({ params }: Readonly<ThesisItemPageProps>
                 collectionTitle={collection && track ? `${collection.title} - ${track.title}` : 'Thesis'}
                 entry={entry}
                 documentId={params.thesis}
-                onRequestFulltext={() => { setShowFulltextForm(true); setFtSuccess(false) }}
+                onRequestFulltext={() => {
+                  setShowFulltextForm(true)
+                  setFtSuccess(false)
+                  setTimeout(() => fulltextFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+                }}
               />
 
               {ftSuccess && (
@@ -134,6 +108,7 @@ export default function ThesisItemPage({ params }: Readonly<ThesisItemPageProps>
               )}
 
               {showFulltextForm && (
+                <div ref={fulltextFormRef}>
                 <Card className="mt-6 border border-grey-200 shadow-none">
                   <CardContent className="p-5 space-y-4">
                     <h3 className="text-base font-semibold text-navy">Request Full Text Access</h3>
@@ -177,6 +152,7 @@ export default function ThesisItemPage({ params }: Readonly<ThesisItemPageProps>
                     </form>
                   </CardContent>
                 </Card>
+                </div>
               )}
             </>
           )}

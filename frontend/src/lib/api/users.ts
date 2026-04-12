@@ -20,6 +20,7 @@ export async function createStudent(payload: {
   first_name: string
   last_name: string
   department: 'CS' | 'IT' | 'IS'
+  password?: string
 }): Promise<{ message: string; student: ApiUser }> {
   return apiRequest('/api/admin/students', {
     method: 'POST',
@@ -32,6 +33,7 @@ export async function createAdmin(payload: {
   first_name: string
   last_name: string
   department: 'CS' | 'IT' | 'IS'
+  password?: string
 }): Promise<{ message: string; admin: ApiUser }> {
   return apiRequest('/api/superadmin/admins', {
     method: 'POST',

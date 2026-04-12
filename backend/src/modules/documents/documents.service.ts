@@ -54,7 +54,7 @@ export class DocumentsService {
 
     if (dbError) {
       await this.databaseService.client.storage.from('documents').remove([storagePath]);
-      throw new InternalServerErrorException('Failed to save document record.');
+      throw new InternalServerErrorException(dbError.message || 'Failed to save document record.');
     }
 
     return document;

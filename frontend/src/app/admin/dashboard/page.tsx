@@ -203,7 +203,7 @@ export default function AdminDashboardPage() {
                       <td className="px-4 py-3 max-w-[280px]">
                         <span className="line-clamp-2">{doc.title}</span>
                       </td>
-                      <td className="px-4 py-3">{(doc.authors as string[]).join(', ')}</td>
+                      <td className="px-4 py-3">{Array.isArray(doc.authors) ? doc.authors.join(', ') : String(doc.authors ?? '')}</td>
                       <td className="px-4 py-3">{doc.department}</td>
                       <td className="px-4 py-3">{doc.year ?? '—'}</td>
                       <td className="px-4 py-3">

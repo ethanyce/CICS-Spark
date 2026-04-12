@@ -19,7 +19,6 @@ export const ADMIN_PROFILE = {
 export const ADMIN_SUPPORT_EMAIL = 'itsupport@ust.edu.ph'
 
 export const ADMIN_NAV_ITEMS = [
-  { href: '/', label: 'Homepage', icon: 'home' },
   { href: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { href: '/admin/submissions', label: 'Submissions', icon: 'submissions' },
   { href: '/admin/fulltext-requests', label: 'Full-Text Requests', icon: 'fulltext' },
@@ -35,9 +34,7 @@ export const ADMIN_PAGE_TITLES: Record<string, string> = {
 }
 
 export const SUBMISSION_DOCUMENT_TYPES = [
-  "Bachelor's Thesis",
-  "Master's Thesis",
-  'Doctoral Thesis',
+  'Thesis',
   'Capstone',
 ] as const
 

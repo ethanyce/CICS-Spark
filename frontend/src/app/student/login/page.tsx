@@ -22,7 +22,7 @@ export default function StudentLoginPage() {
     setLoading(true)
 
     try {
-      const data = await login(email.trim(), password)
+      const data = await login(email.trim(), password.trim())
 
       if (data.role !== 'student') {
         setError('This portal is for student accounts only. Use the Admin Login.')

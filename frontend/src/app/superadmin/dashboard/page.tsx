@@ -64,7 +64,7 @@ export default function SuperAdminDashboardPage() {
               <Users className="h-4 w-4" />
               Manage Users
             </a>
-            <a href="/admin/submissions" className="inline-flex items-center gap-1.5 rounded-md border border-grey-200 bg-white px-4 py-2 text-sm font-medium text-grey-700 no-underline hover:bg-grey-50">
+            <a href="/superadmin/submissions" className="inline-flex items-center gap-1.5 rounded-md border border-grey-200 bg-white px-4 py-2 text-sm font-medium text-grey-700 no-underline hover:bg-grey-50">
               <FileText className="h-4 w-4" />
               View All Submissions
             </a>

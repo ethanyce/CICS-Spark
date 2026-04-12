@@ -17,6 +17,7 @@ import {
 } from '@/components/ui'
 import { searchDocuments, listDocuments, type ApiDocument } from '@/lib/api/documents'
 import { type ThesisEntry } from '@/lib/utils/theses-data'
+import { apiDocToEntry } from '@/lib/utils/api-adapters'
 
 type SearchField = 'any' | 'title' | 'author' | 'keywords'
 
@@ -29,27 +30,6 @@ type Criteria = {
 const DATE_PATTERN = 'MM/dd/yyyy'
 const ENTRY_DATE_PATTERNS = ['MMMM yyyy', 'MMM yyyy', 'MMMM d, yyyy', 'MMM d, yyyy', 'MM/dd/yyyy', 'yyyy-MM-dd'] as const
 const MAX_CRITERIA = 5
-
-function apiDocToEntry(doc: ApiDocument): ThesisEntry {
-  return {
-    slug: doc.id,
-    title: doc.title,
-    authors: Array.isArray(doc.authors) ? doc.authors.join(', ') : String(doc.authors ?? ''),
-    date: doc.year ? String(doc.year) : new Date(doc.created_at).getFullYear().toString(),
-    type: doc.type === 'thesis' ? 'Thesis' : 'Capstone',
-    abstract: doc.abstract ?? '',
-    tags: Array.isArray(doc.keywords) ? doc.keywords.join(', ') : '',
-    departmentSlug: doc.department === 'IT' ? 'department-of-information-technology'
-      : doc.department === 'IS' ? 'department-of-information-systems'
-      : 'department-of-computer-science',
-    trackSlug: doc.track_specialization ?? '',
-  }
-}
-
-function getEntryDetailUrl(entry: ThesisEntry): string {
-  const base = entry.type === 'Capstone' ? '/capstone' : '/theses'
-  return `${base}/${entry.departmentSlug}/${entry.trackSlug}/${entry.slug}`
-}
 
 function includesIgnoreCase(value: string, term: string) {
   return value.toLowerCase().includes(term.toLowerCase())
@@ -321,7 +301,7 @@ export default function AdvancedSearchPanel({
                 <ThesisListItem
                   key={entry.slug}
                   entry={entry}
-                  collectionSlug={`${entry.departmentSlug}/${entry.trackSlug}`}
+                  collectionSlug={entry.trackSlug ? `${entry.departmentSlug}/${entry.trackSlug}` : entry.departmentSlug}
                   basePath={entry.type === 'Capstone' ? '/capstone' : '/theses'}
                   showDivider={index !== results.length - 1}
                 />

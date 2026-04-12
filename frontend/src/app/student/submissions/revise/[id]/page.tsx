@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from 'react'
+import { use, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AlertTriangle, Upload } from 'lucide-react'
@@ -8,7 +8,8 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '
 import { getMyDocuments, reviseDocument, type ApiDocument } from '@/lib/api/documents'
 import { FILE_REQUIREMENTS } from '@/lib/utils'
 
-export default function StudentRevisionPage({ params }: Readonly<{ params: { id: string } }>) {
+export default function StudentRevisionPage({ params: paramsPromise }: Readonly<{ params: Promise<{ id: string }> }>) {
+  const params = use(paramsPromise)
   const router = useRouter()
   const { id } = params
 

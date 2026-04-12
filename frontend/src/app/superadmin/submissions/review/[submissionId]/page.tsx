@@ -24,7 +24,7 @@ const STATUS_LABEL: Record<string, string> = {
   revision: 'Revision Requested',
 }
 
-export default function SubmissionReviewPage({
+export default function SuperAdminSubmissionReviewPage({
   params: paramsPromise,
 }: Readonly<{ params: Promise<{ submissionId: string }> }>) {
   const params = use(paramsPromise)
@@ -51,7 +51,7 @@ export default function SubmissionReviewPage({
       <div className="space-y-3">
         <h1 className="text-[28px] font-semibold text-navy">Submission not found</h1>
         <p className="text-sm text-red-600">{error}</p>
-        <Link href="/admin/submissions" className="text-sm text-cics-red no-underline hover:text-cics-red-600">
+        <Link href="/superadmin/submissions" className="text-sm text-cics-maroon no-underline hover:underline">
           Return to Submissions
         </Link>
       </div>
@@ -67,7 +67,7 @@ export default function SubmissionReviewPage({
     try {
       const feedback = [payload.comment, ...(payload.issues ?? [])].filter(Boolean).join('\n')
       await reviewSubmission(submission!.id, activeAction, feedback || undefined)
-      router.push('/admin/submissions')
+      router.push('/superadmin/submissions')
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Review failed. Please try again.')
     } finally {
@@ -79,7 +79,7 @@ export default function SubmissionReviewPage({
   return (
     <div className="space-y-4">
       <header className="space-y-1">
-        <Link href="/admin/submissions" className="inline-flex items-center gap-1 text-xs text-grey-600 no-underline hover:text-cics-red">
+        <Link href="/superadmin/submissions" className="inline-flex items-center gap-1 text-xs text-grey-600 no-underline hover:text-cics-maroon">
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to Submissions
         </Link>

@@ -6,7 +6,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
   FolderOpen,
-  Home,
   LayoutGrid,
   LogOut,
   Users,
@@ -16,10 +15,9 @@ import { clearAdminSession, getAdminSession } from '@/lib/admin/session'
 import { logout } from '@/lib/api/auth'
 
 const NAV_ITEMS = [
-  { href: '/', label: 'Homepage', icon: Home },
   { href: '/superadmin/dashboard', label: 'Dashboard', icon: LayoutGrid },
   { href: '/superadmin/users', label: 'User Management', icon: Users },
-  { href: '/admin/submissions', label: 'All Submissions', icon: FolderOpen },
+  { href: '/superadmin/submissions', label: 'All Submissions', icon: FolderOpen },
 ] as const
 
 export default function SuperAdminShell({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -48,21 +46,19 @@ export default function SuperAdminShell({ children }: Readonly<{ children: React
     router.push('/login')
   }
 
-  const [homeItem, ...restItems] = NAV_ITEMS
-
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-bg-grey">
       <div className="h-3 bg-cics-maroon" />
 
       <header className="border-b border-grey-200 bg-white px-6 py-3" aria-label="Super Admin context bar">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 no-underline">
+          <div className="flex items-center gap-2">
             <Image src="/images/CICS SEAL.png" alt="CICS Seal" width={32} height={40} className="h-10 w-8 object-contain" />
             <div>
               <p className="text-[14px] font-semibold leading-tight text-cics-maroon">SPARK Super Admin</p>
               <p className="text-[9px] leading-tight text-cics-maroon">University of Santo Tomas</p>
             </div>
-          </Link>
+          </div>
           <p className="text-sm font-medium text-grey-700">Super Admin Portal</p>
         </div>
       </header>
@@ -70,27 +66,8 @@ export default function SuperAdminShell({ children }: Readonly<{ children: React
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <aside className="flex w-[255px] min-h-0 shrink-0 flex-col border-r border-grey-200 bg-white" aria-label="Super Admin sidebar">
           <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1" aria-label="Super Admin navigation">
-            {homeItem && (() => {
-              const Icon = homeItem.icon
-              const active = pathname === homeItem.href
-              return (
-                <Link
-                  href={homeItem.href}
-                  className={cn(
-                    'flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm no-underline transition-colors',
-                    active ? 'bg-cics-maroon text-white hover:text-white' : 'text-grey-700 hover:bg-grey-50',
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{homeItem.label}</span>
-                </Link>
-              )
-            })()}
-
-            <div className="my-4 border-b border-grey-200" />
-
             <div className="space-y-1">
-              {restItems.map((item) => {
+              {NAV_ITEMS.map((item) => {
                 const Icon = item.icon
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
                 return (

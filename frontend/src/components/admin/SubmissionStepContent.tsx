@@ -1,12 +1,36 @@
 'use client'
 
 import { Upload } from 'lucide-react'
-import { Button, Input, Label } from '@/components/ui'
-import {
-  FILE_REQUIREMENTS,
-  SUBMISSION_DOCUMENT_TYPES,
-} from '@/lib/utils'
+import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui'
+import { FILE_REQUIREMENTS } from '@/lib/utils'
 import type { SubmissionDraft, SubmissionStepKey, SubmissionStepMeta } from '@/types/admin'
+
+// Tracks available per department
+const TRACKS_BY_DEPT: Record<string, { value: string; label: string }[]> = {
+  'Computer Science': [
+    { value: 'Core Computer Science', label: 'Core Computer Science' },
+    { value: 'Game Development', label: 'Game Development' },
+    { value: 'Data Science', label: 'Data Science' },
+  ],
+  'Information Technology': [
+    { value: 'Network and Security', label: 'Network and Security' },
+    { value: 'Web and Mobile App Development', label: 'Web and Mobile App Development' },
+    { value: 'IT Automation Track', label: 'IT Automation Track' },
+  ],
+  'Information Systems': [
+    { value: 'Business Analytics', label: 'Business Analytics' },
+    { value: 'Service Management', label: 'Service Management' },
+  ],
+}
+
+// Document type is fixed by department — CS = Thesis, IT/IS = Capstone
+function getDocTypeForDept(dept: string): string {
+  const d = dept.toLowerCase()
+  if (d.includes('information technology') || d.includes('information systems') || d === 'it' || d === 'is') {
+    return 'Capstone'
+  }
+  return 'Thesis'
+}
 
 type SubmissionStepContentProps = {
   step: SubmissionStepMeta
@@ -21,13 +45,16 @@ type SubmissionStepContentProps = {
 
 export default function SubmissionStepContent({ step, draft, onDraftChange, pdfFile, onFileChange, duplicateWarning, onTitleBlur }: Readonly<SubmissionStepContentProps>) {
   if (step.key === 'basic-info') {
+    const trackOptions = TRACKS_BY_DEPT[draft.department] ?? []
+    const autoDocType = draft.department ? getDocTypeForDept(draft.department) : draft.documentType
+
     return (
       <>
         <div className="space-y-2">
           <Label htmlFor="title" className="text-sm font-medium text-grey-700">Title *</Label>
           <Input
             id="title"
-            placeholder="Enter thesis title..."
+            placeholder="Enter thesis/capstone title..."
             className="h-11 border-grey-200"
             value={draft.title}
             onChange={(event) => onDraftChange({ title: event.target.value })}
@@ -64,34 +91,52 @@ export default function SubmissionStepContent({ step, draft, onDraftChange, pdfF
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="department" className="text-sm font-medium text-grey-700">Department/College *</Label>
-          <Input id="department" className="h-11 border-grey-200" value={draft.department} onChange={(event) => onDraftChange({ department: event.target.value })} />
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-grey-700">Department/College</Label>
+            <div className="h-11 flex items-center rounded-md border border-grey-200 bg-grey-50 px-3 text-sm text-grey-500 select-none">
+              {draft.department || 'Assigned from your account'}
+            </div>
+            <p className="text-[11px] text-grey-400">Set by your account — cannot be changed.</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-grey-700">Document Type</Label>
+            <div className="h-11 flex items-center rounded-md border border-grey-200 bg-grey-50 px-3 text-sm text-grey-500 select-none">
+              {autoDocType}
+            </div>
+            <p className="text-[11px] text-grey-400">Determined by your department.</p>
+          </div>
         </div>
 
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium text-grey-700">Document Type *</legend>
-          <div className="space-y-1 text-sm text-grey-700">
-            {SUBMISSION_DOCUMENT_TYPES.map((documentType) => (
-              <label key={documentType} className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="documentType"
-                  checked={draft.documentType === documentType}
-                  onChange={() => onDraftChange({ documentType })}
-                  className="border-grey-300 accent-cics-maroon focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cics-maroon focus-visible:ring-offset-1"
-                />
-                {documentType}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <div className="space-y-2">
+          <Label className="text-sm font-medium text-grey-700">Specialization Track *</Label>
+          {trackOptions.length > 0 ? (
+            <Select
+              value={draft.trackSpecialization}
+              onValueChange={(value) => onDraftChange({ trackSpecialization: value })}
+            >
+              <SelectTrigger className="h-11 border-grey-200 focus:ring-cics-maroon">
+                <SelectValue placeholder="Select your track..." />
+              </SelectTrigger>
+              <SelectContent>
+                {trackOptions.map((track) => (
+                  <SelectItem key={track.value} value={track.value}>{track.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="h-11 flex items-center rounded-md border border-grey-200 bg-grey-50 px-3 text-sm text-grey-400 select-none">
+              {draft.department ? 'No tracks available for this department' : 'Set your department first'}
+            </div>
+          )}
+        </div>
 
         <div className="space-y-2">
           <Label htmlFor="degree" className="text-sm font-medium text-grey-700">Degree Name</Label>
           <Input
             id="degree"
-            placeholder="e.g., Master of Science in Computer Science"
+            placeholder="e.g., Bachelor of Science in Computer Science"
             className="h-11 border-grey-200"
             value={draft.degree}
             onChange={(event) => onDraftChange({ degree: event.target.value })}
@@ -210,7 +255,7 @@ export default function SubmissionStepContent({ step, draft, onDraftChange, pdfF
   return (
     <>
       <div className="grid gap-3 text-sm md:grid-cols-2">
-        <div className="rounded-md border border-grey-200 bg-white p-3">
+        <div className="rounded-md border border-grey-200 bg-white p-3 md:col-span-2">
           <p className="text-xs uppercase tracking-wide text-grey-500">Title</p>
           <p className="mt-1 font-medium text-grey-700">{draft.title || '—'}</p>
         </div>
@@ -219,12 +264,28 @@ export default function SubmissionStepContent({ step, draft, onDraftChange, pdfF
           <p className="mt-1 font-medium text-grey-700">{authorName || '—'}</p>
         </div>
         <div className="rounded-md border border-grey-200 bg-white p-3">
+          <p className="text-xs uppercase tracking-wide text-grey-500">Date of Publication</p>
+          <p className="mt-1 font-medium text-grey-700">{draft.publishedOn || '—'}</p>
+        </div>
+        <div className="rounded-md border border-grey-200 bg-white p-3">
           <p className="text-xs uppercase tracking-wide text-grey-500">Department</p>
           <p className="mt-1 font-medium text-grey-700">{draft.department || '—'}</p>
         </div>
         <div className="rounded-md border border-grey-200 bg-white p-3">
-          <p className="text-xs uppercase tracking-wide text-grey-500">Date of Publication</p>
-          <p className="mt-1 font-medium text-grey-700">{draft.publishedOn || '—'}</p>
+          <p className="text-xs uppercase tracking-wide text-grey-500">Document Type</p>
+          <p className="mt-1 font-medium text-grey-700">{draft.documentType || '—'}</p>
+        </div>
+        <div className="rounded-md border border-grey-200 bg-white p-3 md:col-span-2">
+          <p className="text-xs uppercase tracking-wide text-grey-500">Specialization Track</p>
+          <p className="mt-1 font-medium text-grey-700">{draft.trackSpecialization || '—'}</p>
+        </div>
+        <div className="rounded-md border border-grey-200 bg-white p-3">
+          <p className="text-xs uppercase tracking-wide text-grey-500">Thesis Advisor</p>
+          <p className="mt-1 font-medium text-grey-700">{draft.thesisAdvisor || '—'}</p>
+        </div>
+        <div className="rounded-md border border-grey-200 bg-white p-3">
+          <p className="text-xs uppercase tracking-wide text-grey-500">Keywords</p>
+          <p className="mt-1 font-medium text-grey-700">{draft.keywords || '—'}</p>
         </div>
       </div>
 

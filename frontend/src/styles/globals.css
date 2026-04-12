@@ -97,6 +97,12 @@
     outline-offset: 2px;
   }
 
+  /* Hide browser-native password reveal button (Edge/IE) to avoid duplicate eye icons */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;

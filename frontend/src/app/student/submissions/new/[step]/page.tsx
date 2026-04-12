@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { use, useMemo, useState } from 'react'
 import { Button } from '@/components/ui'
 import SubmissionStepLayout from '@/components/admin/SubmissionStepLayout'
 import SubmissionStepContent, { isSubmissionStepKey } from '@/components/admin/SubmissionStepContent'
@@ -14,6 +14,10 @@ import type { SubmissionDraft, SubmissionStepMeta } from '@/types/admin'
 
 const DRAFT_KEY = 'spark_submission_draft'
 
+// Module-level variable persists the File object across client-side navigations
+// (File objects cannot be stored in localStorage/sessionStorage)
+let _pendingPdfFile: File | null = null
+
 function emptyDraft(): SubmissionDraft {
   return {
     title: '',
@@ -22,7 +26,8 @@ function emptyDraft(): SubmissionDraft {
     lastName: '',
     publishedOn: '',
     department: '',
-    documentType: "Bachelor's Thesis",
+    documentType: 'Thesis',
+    trackSpecialization: '',
     degree: '',
     thesisAdvisor: '',
     panelChair: '',
@@ -61,9 +66,6 @@ function getDeptCode(deptName: string): 'CS' | 'IT' | 'IS' {
   return 'CS'
 }
 
-function getDocType(docType: string): 'thesis' | 'capstone' {
-  return docType.toLowerCase().includes('capstone') ? 'capstone' : 'thesis'
-}
 
 function extractYear(dateStr: string): number | undefined {
   const match = dateStr.match(/\b(19|20)\d{2}\b/)
@@ -112,12 +114,22 @@ const STUDENT_STEPS: Record<string, SubmissionStepMeta> = {
 
 // ── Page component ────────────────────────────────────────────────────────────
 
-export default function StudentSubmissionStepPage({ params }: Readonly<{ params: { step: string } }>) {
+export default function StudentSubmissionStepPage({ params: paramsPromise }: Readonly<{ params: Promise<{ step: string }> }>) {
+  const params = use(paramsPromise)
   const router = useRouter()
   const step = isSubmissionStepKey(params.step) ? STUDENT_STEPS[params.step] : undefined
 
-  const [draft, setDraft] = useState<SubmissionDraft>(loadDraft)
-  const [pdfFile, setPdfFile] = useState<File | null>(null)
+  const [draft, setDraft] = useState<SubmissionDraft>(() => {
+    // Step 1 always starts fresh — never pre-fill from a previous submission
+    const base = params.step === 'basic-info' ? emptyDraft() : loadDraft()
+    // Department comes from the student's account (read-only in the form)
+    if (!base.department) {
+      const session = getStudentSession()
+      if (session?.department) base.department = session.department
+    }
+    return base
+  })
+  const [pdfFile, setPdfFileState] = useState<File | null>(_pendingPdfFile)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null)
@@ -125,7 +137,7 @@ export default function StudentSubmissionStepPage({ params }: Readonly<{ params:
   const canProceed = useMemo(() => {
     if (!step) return false
     if (step.key === 'basic-info') {
-      return Boolean(draft.title.trim() && draft.firstName.trim() && draft.lastName.trim())
+      return Boolean(draft.title.trim() && draft.firstName.trim() && draft.lastName.trim() && draft.trackSpecialization)
     }
     if (step.key === 'academic-details') {
       return Boolean(draft.thesisAdvisor.trim() && draft.keywords.trim() && draft.abstract.trim())
@@ -136,6 +148,11 @@ export default function StudentSubmissionStepPage({ params }: Readonly<{ params:
     // verify-details: enabled once title + file present
     return Boolean(draft.title.trim()) && pdfFile !== null
   }, [draft, step?.key, pdfFile])
+
+  function setPdfFile(file: File | null) {
+    _pendingPdfFile = file
+    setPdfFileState(file)
+  }
 
   function updateDraft(patch: Partial<SubmissionDraft>) {
     setDraft((cur) => persistDraft(patch, cur))
@@ -189,7 +206,8 @@ export default function StudentSubmissionStepPage({ params }: Readonly<{ params:
 
     try {
       const deptCode = getDeptCode(session.department)
-      const docType = getDocType(draft.documentType)
+      // Doc type is always determined by department — CS = thesis, IT/IS = capstone
+      const docType: 'thesis' | 'capstone' = deptCode === 'CS' ? 'thesis' : 'capstone'
       const year = extractYear(draft.publishedOn)
       const authorName = [draft.firstName, draft.middleName, draft.lastName].filter(Boolean).join(' ')
       const keywords = draft.keywords
@@ -203,6 +221,7 @@ export default function StudentSubmissionStepPage({ params }: Readonly<{ params:
       formData.append('authors', JSON.stringify([authorName]))
       formData.append('department', deptCode)
       formData.append('type', docType)
+      if (draft.trackSpecialization) formData.append('track_specialization', draft.trackSpecialization)
       if (draft.abstract) formData.append('abstract', draft.abstract)
       if (year) formData.append('year', String(year))
       if (draft.thesisAdvisor) formData.append('adviser', draft.thesisAdvisor)
@@ -210,7 +229,8 @@ export default function StudentSubmissionStepPage({ params }: Readonly<{ params:
 
       await uploadDocument(formData)
 
-      // Clear draft on success
+      // Clear draft and pending file on success
+      _pendingPdfFile = null
       try { localStorage.removeItem(DRAFT_KEY) } catch { /* ignore */ }
 
       router.push('/student/submissions/new/confirmation')

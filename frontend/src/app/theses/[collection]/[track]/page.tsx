@@ -1,35 +1,23 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { notFound } from 'next/navigation'
 import { CICSHeader, CICSFooter, SecondaryNav, Sidebar } from '@/components/layout'
 import { CollectionHeading, ThesisListItem } from '@/components/thesis'
 import { thesisCollections, getThesisTracksByCollection, type ThesisEntry } from '@/lib/utils/theses-data'
-import { listDocuments, type ApiDocument } from '@/lib/api/documents'
-
-function apiDocToEntry(doc: ApiDocument): ThesisEntry {
-  return {
-    slug: doc.id,
-    title: doc.title,
-    authors: Array.isArray(doc.authors) ? doc.authors.join(', ') : String(doc.authors ?? ''),
-    date: doc.year ? String(doc.year) : new Date(doc.created_at).getFullYear().toString(),
-    type: doc.type === 'thesis' ? 'Thesis' : 'Capstone',
-    abstract: doc.abstract ?? '',
-    tags: Array.isArray(doc.keywords) ? doc.keywords.join(', ') : '',
-    departmentSlug: '',
-    trackSlug: doc.track_specialization ?? '',
-  }
-}
+import { listDocuments } from '@/lib/api/documents'
+import { apiDocToEntry } from '@/lib/utils/api-adapters'
 
 const COLLECTION_TO_DEPT: Record<string, string> = {
   'department-of-computer-science': 'CS',
 }
 
 interface ThesisTrackPageProps {
-  params: { collection: string; track: string }
+  params: Promise<{ collection: string; track: string }>
 }
 
-export default function ThesisTrackPage({ params }: Readonly<ThesisTrackPageProps>) {
+export default function ThesisTrackPage({ params: paramsPromise }: Readonly<ThesisTrackPageProps>) {
+  const params = use(paramsPromise)
   const collection = thesisCollections.find((c) => c.slug === params.collection)
   const track = collection ? getThesisTracksByCollection(collection.slug).find((t) => t.slug === params.track) : undefined
 
@@ -39,7 +27,7 @@ export default function ThesisTrackPage({ params }: Readonly<ThesisTrackPageProp
   useEffect(() => {
     if (!collection || !track) return
     const dept = COLLECTION_TO_DEPT[params.collection]
-    listDocuments({ department: dept, type: 'thesis', track: params.track, limit: 100 })
+    listDocuments({ department: dept, type: 'thesis', track: track.title, limit: 100 })
       .then(({ data }) => setEntries(data.map(apiDocToEntry)))
       .catch(console.error)
       .finally(() => setLoading(false))

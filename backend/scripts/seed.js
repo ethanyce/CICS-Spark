@@ -504,7 +504,7 @@ async function main() {
   const { error: bucketError } = await supabase.storage.createBucket('documents', {
     public: false,
     allowedMimeTypes: ['application/pdf'],
-    fileSizeLimit: 10485760, // 10 MB
+    fileSizeLimit: 41943040, // 40 MB
   })
 
   if (bucketError) {
