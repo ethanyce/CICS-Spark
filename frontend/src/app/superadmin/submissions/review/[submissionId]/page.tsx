@@ -101,7 +101,7 @@ export default function SuperAdminSubmissionReviewPage({
               <div className="grid gap-3 text-xs text-grey-600 md:grid-cols-2">
                 <div className="space-y-2">
                   <p className="inline-flex items-center gap-1 uppercase"><User className="h-3.5 w-3.5" /> Authors</p>
-                  <p className="text-grey-700">{Array.isArray(submission.authors) ? submission.authors.join(', ') : String(submission.authors ?? '')}</p>
+                  <p className="text-grey-700">{(() => { let a = submission.authors; if (typeof a === 'string') { try { a = JSON.parse(a) } catch { /* ok */ } } return Array.isArray(a) ? a.join(', ') : String(a ?? '—') })()} </p>
                   <p className="inline-flex items-center gap-1 uppercase"><CalendarDays className="h-3.5 w-3.5" /> Submitted</p>
                   <p className="text-grey-700">
                     {new Date(submission.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}

@@ -57,6 +57,25 @@ export class DocumentsService {
       throw new InternalServerErrorException(dbError.message || 'Failed to save document record.');
     }
 
+    // Notify all admins and super_admins in the same department about the new submission
+    const { data: admins } = await this.databaseService.client
+      .from('users')
+      .select('id')
+      .in('role', ['admin', 'super_admin'])
+      .or(`department.eq.${dto.department},role.eq.super_admin`)
+      .eq('is_active', true);
+
+    if (admins && admins.length > 0) {
+      const notifRows = admins.map((admin: any) => ({
+        user_id: admin.id,
+        type: 'new_submission',
+        message: `New submission pending review: "${dto.title}"`,
+        is_read: false,
+        reference_id: document.id,
+      }));
+      await this.databaseService.client.from('notifications').insert(notifRows);
+    }
+
     return document;
   }
 
@@ -191,14 +210,25 @@ export class DocumentsService {
       .select(
         'id, title, authors, abstract, year, department, type, track_specialization, adviser, keywords, uploaded_by, created_at',
       )
-      .eq('status', 'approved')
-      .or(
-        `title.ilike.%${term}%,abstract.ilike.%${term}%`,
-      );
+      .eq('status', 'approved');
 
     if (error) throw new BadRequestException(error.message);
 
-    return data;
+    const lower = term.toLowerCase();
+
+    return (data ?? []).filter((doc: any) => {
+      const title = (doc.title ?? '').toLowerCase();
+      const abstract = (doc.abstract ?? '').toLowerCase();
+      // authors and keywords are JSONB arrays — stringify for reliable substring search
+      const authors = JSON.stringify(doc.authors ?? []).toLowerCase();
+      const keywords = JSON.stringify(doc.keywords ?? []).toLowerCase();
+      return (
+        title.includes(lower) ||
+        abstract.includes(lower) ||
+        authors.includes(lower) ||
+        keywords.includes(lower)
+      );
+    });
   }
 
   // ─── GET /api/documents/:id ──────────────────────────────────────────────

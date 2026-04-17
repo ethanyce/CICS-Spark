@@ -29,6 +29,7 @@ export default function AdminFilterBar({
           placeholder={searchPlaceholder}
           className={cn('h-10 border-grey-200 bg-white pl-9', inputClassName)}
           aria-label={searchPlaceholder}
+          autoComplete="off"
         />
       </div>
 

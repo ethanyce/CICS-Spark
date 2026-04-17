@@ -153,7 +153,7 @@ export default function AdminUserDialog({
     ? 'Create a new account for the SPARK repository system.'
     : 'Update user information and permissions.'
 
-  const mustShowPasswordFields = isAdd || changePassword
+  const mustShowPasswordFields = isEdit && changePassword
 
   const invalidPassword = mustShowPasswordFields && password.length > 0 && password.length < 8
   const passwordMismatch = mustShowPasswordFields && confirmPassword.length > 0 && password !== confirmPassword
@@ -189,7 +189,7 @@ export default function AdminUserDialog({
 
         <div className="space-y-1">
           <Label htmlFor="admin-user-email" className="text-sm text-navy">{isAdd ? 'Email Address *' : 'Email'}</Label>
-          <Input id="admin-user-email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="user@ust.edu.ph" className="h-10" />
+          <Input id="admin-user-email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="user@ust.edu.ph" className="h-10" autoComplete="new-password" />
         </div>
 
         <div className="space-y-1">
@@ -211,6 +211,12 @@ export default function AdminUserDialog({
             </Select>
           )}
         </div>
+
+        {isAdd && (
+          <p className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+            A welcome email with a temporary password will be sent to the user automatically.
+          </p>
+        )}
 
         {isAdd ? (
           <div className="space-y-1">

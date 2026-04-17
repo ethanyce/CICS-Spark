@@ -4,11 +4,15 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
+import { EmailService } from '../email/email.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 
 @Injectable()
 export class SuperadminService {
-  constructor(private databaseService: DatabaseService) {}
+  constructor(
+    private databaseService: DatabaseService,
+    private emailService: EmailService,
+  ) {}
 
   /**
    * createAdmin provisions a new admin account.
@@ -32,8 +36,8 @@ export class SuperadminService {
       throw new ConflictException('An account with this email already exists.');
     }
 
-    // Create the auth user with a confirmed email so no invite flow is needed
-    const tempPassword = dto.password ?? 'Password123!';
+    // Generate a random temporary password for the new admin
+    const tempPassword = 'Spark@' + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6).toUpperCase();
     const { data: authData, error: authError } =
       await this.databaseService.client.auth.admin.createUser({
         email,
@@ -66,6 +70,14 @@ export class SuperadminService {
       await this.databaseService.client.auth.admin.deleteUser(authData.user.id);
       throw new InternalServerErrorException(userError.message || 'Failed to create admin record.');
     }
+
+    // Send welcome email (fire-and-forget — never block account creation)
+    this.emailService.sendWelcomeEmail({
+      to: email,
+      name: `${first_name} ${last_name}`,
+      role: 'admin',
+      tempPassword,
+    }).catch(() => {});
 
     return {
       message: 'Admin account created successfully.',

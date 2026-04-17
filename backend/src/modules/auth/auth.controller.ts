@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get, Request } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Request, HttpCode } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -38,5 +38,24 @@ export class AuthController {
   @Get('me')
   getMe(@Request() req: any) {
     return req.user;
+  }
+
+  /**
+   * POST /api/auth/change-password
+   * Protected. Verifies current password, then updates to new password.
+   */
+  @UseGuards(SupabaseGuard)
+  @Post('change-password')
+  @HttpCode(200)
+  changePassword(
+    @Request() req: any,
+    @Body() body: { currentPassword: string; newPassword: string },
+  ) {
+    return this.authService.changePassword(
+      req.user.id,
+      req.user.email,
+      body.currentPassword,
+      body.newPassword,
+    );
   }
 }

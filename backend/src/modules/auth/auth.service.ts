@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
 import { LoginDto } from './dto/login.dto';
 
@@ -49,6 +49,35 @@ export class AuthService {
       first_name: user.first_name,
       last_name: user.last_name,
     };
+  }
+
+  /**
+   * changePassword verifies the current password then updates to the new one.
+   */
+  async changePassword(userId: string, email: string, currentPassword: string, newPassword: string) {
+    if (newPassword.length < 8) {
+      throw new BadRequestException('New password must be at least 8 characters.');
+    }
+
+    // Verify current password
+    const { error: signInError } = await this.databaseService.client.auth.signInWithPassword({
+      email,
+      password: currentPassword,
+    });
+    if (signInError) {
+      throw new UnauthorizedException('Current password is incorrect.');
+    }
+
+    // Update password via admin API (service role — no OTP needed)
+    const { error: updateError } = await this.databaseService.client.auth.admin.updateUserById(
+      userId,
+      { password: newPassword },
+    );
+    if (updateError) {
+      throw new BadRequestException(updateError.message || 'Failed to update password.');
+    }
+
+    return { message: 'Password changed successfully.' };
   }
 
   /**
