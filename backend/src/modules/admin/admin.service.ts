@@ -6,12 +6,16 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
+import { EmailService } from '../email/email.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { ReviewSubmissionDto } from './dto/review-submission.dto';
 
 @Injectable()
 export class AdminService {
-  constructor(private databaseService: DatabaseService) {}
+  constructor(
+    private databaseService: DatabaseService,
+    private emailService: EmailService,
+  ) {}
 
   // ─── M-01: User Provisioning ───────────────────────────────────────────────
 
@@ -37,7 +41,8 @@ export class AdminService {
       throw new ConflictException('A student with this email already exists.');
     }
 
-    // Create the auth user and send invite email
+    // Generate a random temporary password for the new student
+    const tempPassword = 'Spark@' + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6).toUpperCase();
     const { data: authData, error: authError } =
       await this.databaseService.client.auth.admin.inviteUserByEmail(email, {
         data: {
@@ -73,6 +78,14 @@ export class AdminService {
       await this.databaseService.client.auth.admin.deleteUser(authData.user.id);
       throw new InternalServerErrorException(userError.message || 'Failed to create student record.');
     }
+
+    // Send welcome email (fire-and-forget — never block account creation)
+    this.emailService.sendWelcomeEmail({
+      to: email,
+      name: `${first_name} ${last_name}`,
+      role: 'student',
+      tempPassword,
+    }).catch(() => {});
 
     return {
       message: 'Student account created successfully. An invite email has been sent.',
@@ -354,7 +367,55 @@ export class AdminService {
       .single();
 
     if (updateError) {
-      throw new InternalServerErrorException('Failed to update full-text request.');
+      throw new InternalServerErrorException('Failed to update request status.');
+    }
+
+    // Send email notification (fire-and-forget — never block the response)
+    if (status === 'fulfilled') {
+      (async () => {
+        try {
+          const { data: doc } = await this.databaseService.client
+            .from('documents')
+            .select('title, pdf_file_path')
+            .eq('id', request.document_id)
+            .single();
+
+          if (doc?.pdf_file_path) {
+            const EXPIRES_IN_SECONDS = 48 * 60 * 60;
+            const { data: signedData } = await this.databaseService.client.storage
+              .from('documents')
+              .createSignedUrl(doc.pdf_file_path, EXPIRES_IN_SECONDS);
+
+            if (signedData?.signedUrl) {
+              await this.emailService.sendFulltextFulfilledEmail({
+                to: request.requester_email,
+                requesterName: request.requester_name,
+                documentTitle: doc.title,
+                pdfLink: signedData.signedUrl,
+                expiresInHours: 48,
+              });
+            }
+          }
+        } catch { /* silent */ }
+      })();
+    } else if (status === 'denied') {
+      (async () => {
+        try {
+          const { data: doc } = await this.databaseService.client
+            .from('documents')
+            .select('title')
+            .eq('id', request.document_id)
+            .single();
+
+          if (doc) {
+            await this.emailService.sendFulltextDeniedEmail({
+              to: request.requester_email,
+              requesterName: request.requester_name,
+              documentTitle: doc.title,
+            });
+          }
+        } catch { /* silent */ }
+      })();
     }
 
     return {

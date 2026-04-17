@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils'
 import { clearAdminSession, getAdminSession } from '@/lib/admin/session'
 import { logout } from '@/lib/api/auth'
+import NotificationBell from '@/components/admin/NotificationBell'
 
 const NAV_ITEMS = [
   { href: '/superadmin/dashboard', label: 'Dashboard', icon: LayoutGrid },
@@ -59,7 +60,10 @@ export default function SuperAdminShell({ children }: Readonly<{ children: React
               <p className="text-[9px] leading-tight text-cics-maroon">University of Santo Tomas</p>
             </div>
           </div>
-          <p className="text-sm font-medium text-grey-700">Super Admin Portal</p>
+          <div className="flex items-center gap-2">
+            <NotificationBell accentColor="#800000" />
+            <p className="text-sm font-medium text-grey-700">Super Admin Portal</p>
+          </div>
         </div>
       </header>
 
@@ -101,7 +105,7 @@ export default function SuperAdminShell({ children }: Readonly<{ children: React
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-red-500 hover:text-red-600 focus-visible:outline-none"
+              className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-red-500 hover:text-red-600 focus-visible:outline-none"
             >
               <LogOut className="h-4 w-4" />
               Logout

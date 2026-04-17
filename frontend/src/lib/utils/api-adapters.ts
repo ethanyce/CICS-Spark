@@ -20,6 +20,13 @@ const DEPT_SLUGS: Record<string, string> = {
 
 function joinArray(value: unknown): string {
   if (Array.isArray(value)) return value.join(', ')
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      if (Array.isArray(parsed)) return parsed.join(', ')
+    } catch { /* not a JSON array string */ }
+    return value
+  }
   return String(value ?? '')
 }
 

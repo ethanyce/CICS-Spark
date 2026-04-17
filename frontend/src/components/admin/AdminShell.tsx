@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import {
   FileText,
   FolderOpen,
+  KeyRound,
   LayoutGrid,
   LogOut,
   Settings,
@@ -17,6 +18,8 @@ import { ADMIN_NAV_ITEMS, ADMIN_PROFILE, cn, getAdminTopTitle } from '@/lib/util
 import { getAdminSession } from '@/lib/admin/session'
 import { getAdminTheme } from '@/lib/admin/theme'
 import { logout } from '@/lib/api/auth'
+import NotificationBell from '@/components/admin/NotificationBell'
+import ChangePasswordModal from '@/components/admin/ChangePasswordModal'
 
 const iconMap = {
   dashboard: LayoutGrid,
@@ -35,6 +38,7 @@ export default function AdminShell({ children }: Readonly<{ children: React.Reac
   const [sessionName, setSessionName] = useState(ADMIN_PROFILE.name)
   const [sessionEmail, setSessionEmail] = useState(ADMIN_PROFILE.email)
   const [departmentCode, setDepartmentCode] = useState<'cs' | 'it' | 'is'>('cs')
+  const [showChangePassword, setShowChangePassword] = useState(false)
   const theme = getAdminTheme(departmentCode)
 
   useEffect(() => {
@@ -49,6 +53,14 @@ export default function AdminShell({ children }: Readonly<{ children: React.Reac
     setSessionEmail(session.email)
     setDepartmentCode(session.departmentCode)
     setAuthorized(true)
+
+    // Prevent double scrollbar by locking the main document body.
+    // AdminShell has its own scrollable containers inside.
+    document.body.style.overflow = 'hidden'
+    
+    return () => {
+      document.body.style.overflow = ''
+    }
   }, [router])
 
   if (!authorized) {
@@ -63,7 +75,7 @@ export default function AdminShell({ children }: Readonly<{ children: React.Reac
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-bg-grey">
+    <div className="flex fixed inset-0 flex-col overflow-hidden bg-bg-grey">
       <div className="h-3" style={{ backgroundColor: theme.accentHex }} />
 
       <header className="border-b border-grey-200 bg-white px-6 py-3" aria-label="Admin context bar">
@@ -78,7 +90,10 @@ export default function AdminShell({ children }: Readonly<{ children: React.Reac
             </div>
           </div>
 
-          <p className="text-sm font-medium text-grey-700">{topTitle}</p>
+          <div className="flex items-center gap-2">
+            <NotificationBell accentColor={theme.accentHex} />
+            <p className="text-sm font-medium text-grey-700">{topTitle}</p>
+          </div>
         </div>
       </header>
 
@@ -110,25 +125,31 @@ export default function AdminShell({ children }: Readonly<{ children: React.Reac
             </div>
           </nav>
 
-          <div className="mt-auto shrink-0 border-t border-grey-300 px-4 py-4">
+          <div className="mt-auto shrink-0 border-t border-grey-300 px-4 py-4 space-y-3">
             <div className="flex items-center gap-3">
               <div
-                className="flex h-11 w-11 items-center justify-center rounded-full text-[24px] font-medium"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[18px] font-medium"
                 style={{ backgroundColor: theme.badgeBg, color: theme.badgeText }}
               >
                 {sessionName.charAt(0)}
               </div>
-              <div>
-                <p className="text-sm font-medium text-grey-700">{sessionName}</p>
-                <p className="text-[12px] text-grey-500">{sessionEmail}</p>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-grey-700">{sessionName}</p>
+                <p className="truncate text-[11px] text-grey-500">{sessionEmail}</p>
               </div>
             </div>
-
+            <button
+              type="button"
+              onClick={() => setShowChangePassword(true)}
+              className="flex w-full items-center gap-2 rounded-[8px] px-3 py-2 text-sm text-grey-600 hover:bg-grey-50 hover:text-grey-800 focus-visible:outline-none"
+            >
+              <KeyRound className="h-4 w-4" />
+              Change Password
+            </button>
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-red-500 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
-              style={{ ['--tw-ring-color' as string]: theme.accentHex }}
+              className="flex w-full items-center gap-2 rounded-[8px] px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-600 focus-visible:outline-none"
             >
               <LogOut className="h-4 w-4" />
               Logout
@@ -140,6 +161,13 @@ export default function AdminShell({ children }: Readonly<{ children: React.Reac
           {children}
         </main>
       </div>
+
+      {showChangePassword && (
+        <ChangePasswordModal
+          accentColor={theme.accentHex}
+          onClose={() => setShowChangePassword(false)}
+        />
+      )}
     </div>
   )
 }
