@@ -44,10 +44,13 @@ export class AdminService {
     // Generate a random temporary password for the new student
     const tempPassword = 'Spark@' + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6).toUpperCase();
     const { data: authData, error: authError } =
-      await this.databaseService.client.auth.admin.createUser({
-        email,
-        password: tempPassword,
-        email_confirm: true,
+      await this.databaseService.client.auth.admin.inviteUserByEmail(email, {
+        data: {
+          first_name,
+          last_name,
+          role: 'student',
+          department,
+        },
       });
 
     if (authError || !authData.user) {
@@ -65,7 +68,7 @@ export class AdminService {
         last_name,
         role: 'student',
         department,
-        is_active: true,
+        is_active: false, // Will be set to true when they confirm email
       })
       .select('id, email, first_name, last_name, role, department, is_active, created_at')
       .single();
@@ -85,7 +88,7 @@ export class AdminService {
     }).catch(() => {});
 
     return {
-      message: 'Student account created successfully.',
+      message: 'Student account created successfully. An invite email has been sent.',
       student: user,
     };
   }
@@ -167,6 +170,47 @@ export class AdminService {
       .order('created_at', { ascending: false });
 
     return { ...document, reviews: reviews ?? [] };
+  }
+
+  /**
+   * getSubmissionPdfUrl generates a signed URL for admins to preview the PDF.
+   * Only admins from the same department (or super_admin) can access.
+   */
+  async getSubmissionPdfUrl(documentId: string, currentUser: any) {
+    // Fetch the document
+    const { data: document, error: fetchError } = await this.databaseService.client
+      .from('documents')
+      .select('id, pdf_file_path, department')
+      .eq('id', documentId)
+      .single();
+
+    if (fetchError || !document) {
+      throw new NotFoundException('Document not found.');
+    }
+
+    // Check permissions: admin can only view their department's documents
+    if (currentUser.role === 'admin' && document.department !== currentUser.department) {
+      throw new ForbiddenException('You can only preview documents from your department.');
+    }
+
+    if (!document.pdf_file_path) {
+      throw new NotFoundException('No PDF file associated with this document.');
+    }
+
+    // Generate a signed URL valid for 1 hour
+    const { data: signedUrlData, error: urlError } = await this.databaseService.client
+      .storage
+      .from('documents')
+      .createSignedUrl(document.pdf_file_path, 3600); // 3600 seconds = 1 hour
+
+    if (urlError || !signedUrlData) {
+      throw new InternalServerErrorException('Failed to generate PDF preview URL.');
+    }
+
+    return {
+      pdfUrl: signedUrlData.signedUrl,
+      expiresIn: 3600,
+    };
   }
 
   /**
