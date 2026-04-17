@@ -24,6 +24,9 @@ import { FulltextModule } from './modules/fulltext/fulltext.module';
 // Notifications (M-01 table)
 import { NotificationsModule } from './modules/notifications/notifications.module';
 
+// Email
+import { EmailModule } from './modules/email/email.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -54,6 +57,9 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 
     // In-app notifications (M-01 notifications table)
     NotificationsModule,
+
+    // Email (nodemailer)
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [
