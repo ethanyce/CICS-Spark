@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { ArrowLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react'
 import { Button, Card, Input, Label } from '@/components/ui'
-import { SAMPLE_STUDENTS } from '@/lib/mock-student'
 import { login } from '@/lib/api/auth'
 
 export default function StudentLoginPage() {
@@ -105,17 +104,6 @@ export default function StudentLoginPage() {
             </form>
           </div>
         </Card>
-
-        <div className="mt-5 rounded-[12px] border border-[#d9e5e1] bg-white p-4">
-          <p className="text-[13px] font-semibold text-[#134e4a] mb-2">Dummy Student Credentials</p>
-          <div className="space-y-2 text-[12px] text-[#5d6d6a]">
-            {SAMPLE_STUDENTS.map((account) => (
-              <p key={account.email}>
-                {account.department}: <span className="font-medium">{account.email}</span> / <span className="font-medium">{account.password}</span>
-              </p>
-            ))}
-          </div>
-        </div>
 
         <p className="mt-4 text-center text-[13px] text-[#6a7d79]">
           Need admin access? <Link href="/login" className="text-[#0f766e] hover:underline">Go to Admin Login</Link>
