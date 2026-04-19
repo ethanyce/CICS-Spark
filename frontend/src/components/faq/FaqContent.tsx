@@ -43,7 +43,7 @@ const faqCategories: FaqCategory[] = [
       },
       {
         question: 'What is SPARK @USTCICS?',
-        answer: 'SPARK @USTCICS is the SPARK Repository platform for storing and sharing approved academic outputs.',
+        answer: 'SPARK @USTCICS is the College of Information and Computing Sciences\' platform for storing and sharing approved academic outputs.',
       },
       {
         question: 'Why should I submit my work to SPARK @USTCICS?',
