@@ -53,7 +53,7 @@ export function resolveThesisDetail(entry: ThesisEntry): ThesisDetail {
     documentType: entry.type,
     degreeName: 'Bachelor of Science in Computer Science',
     subjectCategories: entry.tags,
-    college: 'SPARK Repository',
+    college: 'College of Information and Computing Sciences',
     departmentUnit: 'Department of Computer Science',
     thesisAdvisor: 'Not provided',
     defensePanelChair: 'Not provided',
