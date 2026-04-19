@@ -15,8 +15,8 @@ const outfit = Outfit({
 })
 
 export const metadata: Metadata = {
-  title: 'SPARK Repository - University of Santo Tomas',
-  description: 'A digital repository of theses and capstone projects of the College of Information and Computing Sciences, University of Santo Tomas',
+  title: 'SPARK Repository - College of Information and Computing Sciences, University of Santo Tomas',
+  description: 'A digital repository of theses and capstone projects of the College of Information and Computing Sciences',
 }
 
 export default function RootLayout({
