@@ -133,26 +133,10 @@ export default function SubmissionStepContent({ step, draft, onDraftChange, pdfF
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="degree" className="text-sm font-medium text-grey-700">Degree Name *</Label>
-          <Select
-            value={draft.degree}
-            onValueChange={(value) => onDraftChange({ degree: value })}
-          >
-            <SelectTrigger className="h-11 border-grey-200 focus:ring-cics-maroon">
-              <SelectValue placeholder="Select your degree..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Bachelor of Science in Computer Science (BSCS)">
-                Bachelor of Science in Computer Science (BSCS)
-              </SelectItem>
-              <SelectItem value="Bachelor of Science in Information Technology (BSIT)">
-                Bachelor of Science in Information Technology (BSIT)
-              </SelectItem>
-              <SelectItem value="Bachelor of Science in Information Systems (BSIS)">
-                Bachelor of Science in Information Systems (BSIS)
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <Label htmlFor="degree" className="text-sm font-medium text-grey-700">Degree Name</Label>
+          <div className="h-11 flex items-center rounded-md border border-grey-200 bg-grey-50 px-3 text-sm text-grey-700 select-none">
+            {draft.degree || '—'}
+          </div>
         </div>
       </>
     )

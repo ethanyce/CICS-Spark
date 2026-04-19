@@ -66,6 +66,12 @@ function getDeptCode(deptName: string): 'CS' | 'IT' | 'IS' {
   return 'CS'
 }
 
+const DEGREE_BY_DEPT: Record<string, string> = {
+  CS: 'Bachelor of Science in Computer Science (BSCS)',
+  IT: 'Bachelor of Science in Information Technology (BSIT)',
+  IS: 'Bachelor of Science in Information Systems (BSIS)',
+}
+
 
 function extractYear(dateStr: string): number | undefined {
   const match = dateStr.match(/\b(19|20)\d{2}\b/)
@@ -122,10 +128,13 @@ export default function StudentSubmissionStepPage({ params: paramsPromise }: Rea
   const [draft, setDraft] = useState<SubmissionDraft>(() => {
     // Step 1 always starts fresh — never pre-fill from a previous submission
     const base = params.step === 'basic-info' ? emptyDraft() : loadDraft()
-    // Department comes from the student's account (read-only in the form)
+    // Department and degree come from the student's account (read-only in the form)
     if (!base.department) {
       const session = getStudentSession()
-      if (session?.department) base.department = session.department
+      if (session?.department) {
+        base.department = session.department
+        base.degree = DEGREE_BY_DEPT[session.department] ?? base.degree
+      }
     }
     return base
   })
