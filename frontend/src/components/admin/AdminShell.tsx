@@ -18,6 +18,7 @@ import { ADMIN_NAV_ITEMS, ADMIN_PROFILE, cn, getAdminTopTitle } from '@/lib/util
 import { clearAdminSession, getAdminSession } from '@/lib/admin/session'
 import { getAdminTheme } from '@/lib/admin/theme'
 import { logout } from '@/lib/api/auth'
+import { getMyPermissions, type Permission } from '@/lib/api/permissions'
 import NotificationBell from '@/components/admin/NotificationBell'
 import ChangePasswordModal from '@/components/admin/ChangePasswordModal'
 
@@ -30,6 +31,15 @@ const iconMap = {
   settings: Settings,
 } as const
 
+// Map navigation items to required permissions
+const NAV_PERMISSIONS: Record<string, Permission | null> = {
+  '/admin/dashboard': null, // Dashboard always visible
+  '/admin/submissions': 'submissions.view',
+  '/admin/fulltext-requests': 'fulltext.manage',
+  '/admin/users': 'users.view',
+  '/admin/reports': 'reports.view',
+}
+
 export default function AdminShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname()
   const router = useRouter()
@@ -38,6 +48,9 @@ export default function AdminShell({ children }: Readonly<{ children: React.Reac
   const [sessionName, setSessionName] = useState(ADMIN_PROFILE.name)
   const [sessionEmail, setSessionEmail] = useState(ADMIN_PROFILE.email)
   const [departmentCode, setDepartmentCode] = useState<'cs' | 'it' | 'is'>('cs')
+  const [userRole, setUserRole] = useState<'admin' | 'super_admin'>('admin')
+  const [permissions, setPermissions] = useState<Permission[]>([])
+  const [permissionsLoaded, setPermissionsLoaded] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
   const theme = getAdminTheme(departmentCode)
   const inactivityTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -53,7 +66,24 @@ export default function AdminShell({ children }: Readonly<{ children: React.Reac
     setSessionName(session.name)
     setSessionEmail(session.email)
     setDepartmentCode(session.departmentCode)
+    setUserRole(session.role)
     setAuthorized(true)
+
+    // Fetch permissions for regular admins
+    if (session.role === 'admin') {
+      getMyPermissions()
+        .then(perms => {
+          setPermissions(perms)
+          setPermissionsLoaded(true)
+        })
+        .catch(err => {
+          console.error('Failed to load permissions:', err)
+          setPermissionsLoaded(true) // Still mark as loaded to show UI
+        })
+    } else {
+      // Super admin has all permissions
+      setPermissionsLoaded(true)
+    }
 
     // Prevent double scrollbar by locking the main document body.
     // AdminShell has its own scrollable containers inside.
@@ -88,7 +118,22 @@ export default function AdminShell({ children }: Readonly<{ children: React.Reac
     }
   }, [authorized, router])
 
-  if (!authorized) {
+  // Filter navigation items based on permissions
+  const visibleNavItems = ADMIN_NAV_ITEMS.filter(item => {
+    // Super admin sees everything
+    if (userRole === 'super_admin') return true
+    
+    // Check if this nav item requires a permission
+    const requiredPermission = NAV_PERMISSIONS[item.href]
+    
+    // If no permission required, show it
+    if (!requiredPermission) return true
+    
+    // Check if user has the required permission
+    return permissions.includes(requiredPermission)
+  })
+
+  if (!authorized || !permissionsLoaded) {
     return null
   }
 
@@ -126,7 +171,7 @@ export default function AdminShell({ children }: Readonly<{ children: React.Reac
         <aside className="flex w-[255px] min-h-0 shrink-0 flex-col border-r border-grey-200 bg-white" aria-label="Admin sidebar">
           <nav className="flex-1 overflow-y-auto px-4 py-4" aria-label="Admin primary navigation">
             <div className="space-y-1">
-              {ADMIN_NAV_ITEMS.map((item) => {
+              {visibleNavItems.map((item) => {
               const Icon = iconMap[item.icon]
               const active = pathname === item.href ||
                 (item.href === '/admin/submissions' && pathname.startsWith('/admin/submissions/')) ||

@@ -9,6 +9,7 @@ import {
   KeyRound,
   LayoutGrid,
   LogOut,
+  Settings,
   Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { href: '/superadmin/dashboard', label: 'Dashboard', icon: LayoutGrid },
   { href: '/superadmin/users', label: 'User Management', icon: Users },
   { href: '/superadmin/submissions', label: 'All Submissions', icon: FolderOpen },
+  { href: '/superadmin/settings', label: 'Settings', icon: Settings },
 ] as const
 
 export default function SuperAdminShell({ children }: Readonly<{ children: React.ReactNode }>) {

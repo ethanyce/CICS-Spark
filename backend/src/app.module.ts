@@ -30,6 +30,9 @@ import { EmailModule } from './modules/email/email.module';
 // Analytics
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 
+// Permissions
+import { PermissionsModule } from './modules/permissions/permissions.module';
+
 // OAI-PMH
 import { OaiModule } from './modules/oai/oai.module';
 
@@ -69,6 +72,9 @@ import { OaiModule } from './modules/oai/oai.module';
 
     // Analytics & Usage Metrics
     AnalyticsModule,
+
+    // Permissions & Access Control
+    PermissionsModule,
 
     // OAI-PMH metadata harvesting
     OaiModule,
