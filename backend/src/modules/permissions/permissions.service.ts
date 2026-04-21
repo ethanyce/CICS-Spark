@@ -221,7 +221,7 @@ export class PermissionsService {
       // Upsert (insert or update) the permissions row
       const { error: upsertError } = await this.databaseService.client
         .from('admin_permissions')
-        .upsert(updateData);
+        .upsert(updateData, { onConflict: 'user_id' });
 
       if (upsertError) {
         console.error('Upsert error:', upsertError);

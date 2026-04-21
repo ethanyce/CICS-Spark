@@ -40,6 +40,13 @@ export function middleware(request: NextRequest) {
         dashUrl.pathname = '/admin/dashboard'
         return NextResponse.redirect(dashUrl)
       }
+
+      // Admin routes: super_admin should use their own portal
+      if (pathname.startsWith('/admin') && session.role === 'super_admin') {
+        const superDashUrl = request.nextUrl.clone()
+        superDashUrl.pathname = '/superadmin/dashboard'
+        return NextResponse.redirect(superDashUrl)
+      }
     } catch {
       const loginUrl = request.nextUrl.clone()
       loginUrl.pathname = '/login'

@@ -63,6 +63,11 @@ export default function AdminShell({ children }: Readonly<{ children: React.Reac
       return
     }
 
+    if (session.role === 'super_admin') {
+      router.replace('/superadmin/dashboard')
+      return
+    }
+
     setSessionName(session.name)
     setSessionEmail(session.email)
     setDepartmentCode(session.departmentCode)
