@@ -24,7 +24,6 @@ export const ADMIN_NAV_ITEMS = [
   { href: '/admin/fulltext-requests', label: 'Full-Text Requests', icon: 'fulltext' },
   { href: '/admin/users', label: 'Users', icon: 'users' },
   { href: '/admin/reports', label: 'Reports', icon: 'reports' },
-  { href: '/admin/settings', label: 'Settings', icon: 'settings' },
 ] as const
 
 export const ADMIN_PAGE_TITLES: Record<string, string> = {

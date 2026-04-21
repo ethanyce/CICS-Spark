@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   LogOut,
   ShieldAlert,
+  Settings,
   Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { href: '/superadmin/submissions', label: 'All Submissions', icon: FolderOpen },
   { href: '/superadmin/password-reset-requests', label: 'Password Requests', icon: ShieldAlert },
   { href: '/superadmin/reports', label: 'Reports', icon: BarChart2 },
+  { href: '/superadmin/settings', label: 'Settings', icon: Settings },
 ] as const
 
 export default function SuperAdminShell({ children }: Readonly<{ children: React.ReactNode }>) {
