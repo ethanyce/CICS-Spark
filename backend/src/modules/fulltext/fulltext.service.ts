@@ -21,7 +21,7 @@ export class FulltextService {
     // Verify the document exists and is publicly approved
     const { data: document, error: docError } = await this.databaseService.client
       .from('documents')
-      .select('id, title, status')
+      .select('id, title, status, department')
       .eq('id', dto.document_id)
       .eq('status', 'approved')
       .single();
@@ -60,6 +60,27 @@ export class FulltextService {
 
     if (error) {
       throw new InternalServerErrorException('Failed to submit full-text request.');
+    }
+
+    // Notify admins of the document's department (fire-and-forget)
+    if (document.department) {
+      const { data: admins } = await this.databaseService.client
+        .from('users')
+        .select('id')
+        .eq('department', document.department)
+        .eq('role', 'admin')
+        .eq('is_active', true);
+
+      if (admins && admins.length > 0) {
+        const notifRows = admins.map((admin) => ({
+          user_id: admin.id,
+          type: 'fulltext_request',
+          message: `New full-text request for "${document.title}" from ${dto.requester_name}.`,
+          is_read: false,
+          reference_id: request.id,
+        }));
+        await this.databaseService.client.from('notifications').insert(notifRows);
+      }
     }
 
     return {
