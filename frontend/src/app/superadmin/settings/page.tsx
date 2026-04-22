@@ -156,7 +156,7 @@ export default function SuperAdminSettingsPage() {
         const adminPerm = adminPermissions.find(ap => ap.userId === admin.id)
         return {
           userId: admin.id,
-          permissions: adminPerm?.permissions || [],
+          permissions: (adminPerm?.permissions || []) as import('@/lib/api/permissions').Permission[],
         }
       })
       
