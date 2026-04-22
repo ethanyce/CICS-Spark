@@ -57,7 +57,7 @@ const privacyPolicySections = [
       'The repository also utilizes the following external services for communications and interoperability:',
     ],
     bullets: [
-      'Brevo (HTTP API): Handles transactional email delivery for account credentials, submission status notifications, and full-text access request updates.',
+      'HTTP API: Handles transactional email services.',
       'OAI-PMH Harvesters: Enables external platforms such as Google Scholar, library catalogs, and academic aggregators to discover and index repository metadata via standard protocols.',
     ],
     postParagraphs: [
