@@ -14,9 +14,10 @@ import type { SubmissionDraft, SubmissionStepMeta } from '@/types/admin'
 
 const DRAFT_KEY = 'spark_submission_draft'
 
-// Module-level variable persists the File object across client-side navigations
+// Module-level variables persist File objects across client-side navigations
 // (File objects cannot be stored in localStorage/sessionStorage)
 let _pendingPdfFile: File | null = null
+let _pendingAbstractFile: File | null = null
 
 function emptyDraft(): SubmissionDraft {
   return {
@@ -45,6 +46,7 @@ function emptyDraft(): SubmissionDraft {
     keywords: '',
     abstract: '',
     fileName: '',
+    abstractFileName: '',
   }
 }
 
@@ -148,28 +150,36 @@ export default function StudentSubmissionStepPage({ params: paramsPromise }: Rea
     return base
   })
   const [pdfFile, setPdfFileState] = useState<File | null>(_pendingPdfFile)
+  const [abstractFile, setAbstractFileState] = useState<File | null>(_pendingAbstractFile)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null)
 
+  const isDuplicateBlocked = Boolean(duplicateWarning?.startsWith('DUPLICATE:'))
+
   const canProceed = useMemo(() => {
     if (!step) return false
     if (step.key === 'basic-info') {
-      return Boolean(draft.title.trim() && draft.firstName.trim() && draft.lastName.trim() && draft.trackSpecialization)
+      return Boolean(draft.title.trim() && draft.firstName.trim() && draft.lastName.trim() && draft.trackSpecialization) && !isDuplicateBlocked
     }
     if (step.key === 'academic-details') {
       return Boolean(draft.thesisAdvisor.trim() && draft.keywords.trim() && draft.abstract.trim())
     }
     if (step.key === 'file-upload') {
-      return pdfFile !== null
+      return pdfFile !== null && abstractFile !== null
     }
-    // verify-details: enabled once title + file present
-    return Boolean(draft.title.trim()) && pdfFile !== null
+    // verify-details: enabled once title + both files present
+    return Boolean(draft.title.trim()) && pdfFile !== null && abstractFile !== null
   }, [draft, step?.key, pdfFile])
 
   function setPdfFile(file: File | null) {
     _pendingPdfFile = file
     setPdfFileState(file)
+  }
+
+  function setAbstractFile(file: File | null) {
+    _pendingAbstractFile = file
+    setAbstractFileState(file)
   }
 
   function updateDraft(patch: Partial<SubmissionDraft>) {
@@ -181,9 +191,12 @@ export default function StudentSubmissionStepPage({ params: paramsPromise }: Rea
     if (title.length < 5) return
     try {
       const result = await checkDuplicate(title)
-      if (result.isDuplicate && result.matches.length > 0) {
+      if (result.isDuplicate) {
+        const pct = Math.round((result.matches[0]?.similarity ?? 0) * 100)
+        setDuplicateWarning(`DUPLICATE: This title is identical or near-identical to an existing submission (${pct}% match). Submission is not allowed.`)
+      } else if (result.matches.length > 0) {
         const pct = Math.round((result.matches[0].similarity ?? 0) * 100)
-        setDuplicateWarning(`Similar title found (${pct}% match). Please confirm your submission is not a duplicate.`)
+        setDuplicateWarning(`Similar title found (${pct}% match). Please verify your submission is not a duplicate before proceeding.`)
       } else {
         setDuplicateWarning(null)
       }
@@ -243,6 +256,7 @@ export default function StudentSubmissionStepPage({ params: paramsPromise }: Rea
 
       const formData = new FormData()
       formData.append('file', pdfFile)
+      if (abstractFile) formData.append('abstract_file', abstractFile)
       formData.append('title', draft.title)
       formData.append('authors', JSON.stringify(authors))
       formData.append('department', deptCode)
@@ -256,8 +270,9 @@ export default function StudentSubmissionStepPage({ params: paramsPromise }: Rea
 
       await uploadDocument(formData)
 
-      // Clear draft and pending file on success
+      // Clear draft and pending files on success
       _pendingPdfFile = null
+      _pendingAbstractFile = null
       try { localStorage.removeItem(DRAFT_KEY) } catch { /* ignore */ }
 
       router.push('/student/submissions/new/confirmation')
@@ -280,7 +295,7 @@ export default function StudentSubmissionStepPage({ params: paramsPromise }: Rea
   }
 
   const isVerifyStep = step.key === 'verify-details'
-  const missingFile = isVerifyStep && pdfFile === null
+  const missingFile = isVerifyStep && (pdfFile === null || abstractFile === null)
   const pageTitle = getDeptCode(draft.department) === 'CS' ? 'Submit New Thesis' : 'Submit New Capstone'
 
   return (
@@ -295,7 +310,7 @@ export default function StudentSubmissionStepPage({ params: paramsPromise }: Rea
           )}
           {missingFile && (
             <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-              No file selected. Please go back to step 3 and upload your PDF.
+              {pdfFile === null ? 'No thesis/capstone PDF selected.' : 'No ACM/ITSU abstract PDF selected.'} Please go back to step 3 and upload both files.
             </p>
           )}
           <div className="flex items-center justify-between gap-2">
@@ -333,6 +348,8 @@ export default function StudentSubmissionStepPage({ params: paramsPromise }: Rea
         onDraftChange={updateDraft}
         pdfFile={pdfFile}
         onFileChange={setPdfFile}
+        abstractFile={abstractFile}
+        onAbstractFileChange={setAbstractFile}
         duplicateWarning={duplicateWarning}
         onTitleBlur={handleTitleBlur}
       />
